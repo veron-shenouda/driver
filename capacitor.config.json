@@ -1,0 +1,15 @@
+{
+  "appId": "com.captain.driver",
+  "appName": "كابتن المشاوير",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_alarm",
+      "iconColor": "#F59E0B"
+    }
+  }
+}

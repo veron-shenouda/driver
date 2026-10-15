@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>كابتن المشاوير</title>
+
+  <!-- PWA & Mobile Meta Tags -->
+  <meta name="theme-color" content="#0A0F1D">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="الكابتن">
+
+  <!-- Manifest -->
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='90' fill='%230A0F1D'/%3E%3Ccircle cx='256' cy='256' r='180' fill='none' stroke='%23F59E0B' stroke-width='24'/%3E%3Ccircle cx='256' cy='256' r='60' fill='%232563EB' stroke='%23F59E0B' stroke-width='10'/%3E%3Cpath d='M76 256h120m120 0h120M256 316v120' stroke='%23F59E0B' stroke-width='24' stroke-linecap='round'/%3E%3Ccircle cx='256' cy='120' r='20' fill='%2310B981'/%3E%3C/svg%3E">
+
+  <!-- Google Font 'Tajawal' -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+      <div class="brand-wrap">
+        <span class="brand-logo-icon">🚕</span>
+        <h1 class="brand-title">كابتن المشاوير</h1>
+      </div>
+      <div class="nav-actions">
+        <button id="btnTestAlarm" class="btn-header-action test" title="تجربة صوت التنبيه الفوري">
+          <span>🔔</span> <span>تجربة صوت التنبيه</span>
+        </button>
+        <button id="btnOpenManual" class="btn-header-action add" title="تسجيل مشوار جديد">
+          <span>➕</span> <span>مشوار جديد</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- LIVE REAL-TIME CLOCK (Hours, Minutes, Seconds, ar-EG) -->
+    <section class="live-clock-card" aria-label="الساعة الحالية">
+      <div class="clock-digits-wrap">
+        <div id="liveClockTime" class="clock-time-main">--:--:--</div>
+        <div id="liveClockPeriod" class="clock-ampm">--</div>
+      </div>
+      <div id="liveClockDate" class="clock-date-arabic">جاري التحميل...</div>
+    </section>
+
+    <!-- Main Viewport -->
+    <main class="main-viewport">
+      <!-- Prominent Contact Import Button -->
+      <button id="btnImportContact" class="btn-import-contact">
+        <span>📞</span> <span>سحب رقم العميل من التليفون</span>
+      </button>
+
+      <!-- Battery Protection Pill -->
+      <button id="btnBatteryFix" class="btn-header-action battery" style="width: 100%; justify-content: center; min-height: 48px;">
+        <span>🔋</span> <span>حماية منبه التطبيق من قيود البطارية</span>
+      </button>
+
+      <!-- Trips List (Clean empty state if no trips) -->
+      <div id="tripsContainer">
+        <!-- Populated dynamically -->
+      </div>
+    </main>
+
+    <!-- Floating Zero-Click Voice Button -->
+    <aside class="voice-fab-holder">
+      <button id="voiceFabTouch" class="voice-fab-touch">
+        <span>🎙️</span>
+        <span>تحدث لتسجيل مشوار فوري ⚡</span>
+      </button>
+    </aside>
+
+  </div> <!-- End app-shell -->
+
+  <!-- Urgent Full-Screen Alarm Dismiss Overlay -->
+  <div id="urgentAlarmOverlay" class="urgent-alarm-overlay" role="alertdialog" aria-modal="true">
+    <div class="urgent-alarm-icon">🚨</div>
+    <div class="urgent-alarm-title">حان موعد المشوار الآن يا كابتن!</div>
+    <div class="urgent-alarm-sub">المنبه الصوتي يعمل بأعلى درجة تنبيه</div>
+    <button id="btnStopUrgentAlarm" class="btn-stop-alarm-giant">
+      <span>🔕</span> <span>إيقاف التنبيه</span>
+    </button>
+  </div>
+
+  <!-- Manual Add Modal -->
+  <div id="modalLayer" class="modal-layer">
+    <div class="modal-sheet-clean">
+      <div class="modal-header-row">
+        <h3 class="modal-header-title">تسجيل مشوار جديد</h3>
+        <button id="btnCloseModal" style="background: none; border: none; color: #FFF; font-size: 26px; cursor: pointer;">✕</button>
+      </div>
+
+      <form id="cleanManualForm">
+        <input type="text" id="manualName" class="input-giant" placeholder="اسم العميل" required>
+        <input type="tel" id="manualPhone" class="input-giant" placeholder="رقم الهاتف" dir="ltr">
+        
+        <select id="manualType" class="input-giant" style="margin-top: 12px;">
+          <option value="airport">✈️ مشوار مطار</option>
+          <option value="travel">🛣️ سفر محافظات</option>
+          <option value="school">🎒 توصيلة مدرسة</option>
+          <option value="general" selected>🚗 مشوار خاص VIP</option>
+        </select>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;">
+          <input type="date" id="manualDate" class="input-giant" required>
+          <input type="time" id="manualTime" class="input-giant" required>
+        </div>
+
+        <input type="number" id="manualPrice" class="input-giant" placeholder="الأجرة (جنيه)" style="margin-top: 12px;">
+
+        <button type="submit" class="btn-modal-commit">حفظ المشوار ⚡</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Bar -->
+  <div id="toastBar" class="toast-bar">
+    <span id="toastText">تم حفظ المشوار!</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="./js/audio.js"></script>
+  <script src="./js/nlp-parser.js"></script>
+  <script src="./js/storage.js"></script>
+  <script src="./js/voice.js"></script>
+  <script src="./js/alarm-bridge.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
