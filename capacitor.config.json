@@ -1,8 +1,7 @@
 {
   "appId": "com.captain.driver",
   "appName": "كابتن المشاوير",
-  "webDir": ".",
-  "bundledWebRuntime": false,
+  "webDir": "www",
   "server": {
     "androidScheme": "https"
   },

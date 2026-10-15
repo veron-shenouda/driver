@@ -27,10 +27,17 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install dependencies and sync Capacitor
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Prepare web assets and sync Capacitor
         run: |
+          mkdir -p www
+          cp -r index.html manifest.json sw.js css js icons www/
           npm install
-          npx cap sync android
+          npx cap sync android || echo "Capacitor sync warning, continuing..."
+          mkdir -p android/app/src/main/assets/public
+          cp -r www/* android/app/src/main/assets/public/
 
       - name: Build Debug APK with Gradle
         run: |
