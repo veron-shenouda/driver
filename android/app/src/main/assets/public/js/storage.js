@@ -1,17 +1,39 @@
 /**
- * Zero-Bloat Local Storage Manager
- * Clean slate: trip records, client contacts memory, and phone normalizer.
+ * Zero-Bloat Robust Local & Native Storage Manager
+ * State safety: Dual persistence (LocalStorage + Native Android SharedPreferences Backup)
+ * Client contacts memory, phone normalizer, and auto-recovery on restart.
  */
 
 class CaptainStorage {
   constructor() {
     this.TRIPS_KEY = 'captain_trips_clean_v2';
     this.CLIENTS_KEY = 'captain_clients_clean_v2';
+
+    // Synchronize and restore backup if LocalStorage was cleared
+    this.ensureStateRecovery();
+  }
+
+  ensureStateRecovery() {
+    try {
+      const localTrips = this.getLocalTrips();
+      if ((!localTrips || localTrips.length === 0) && window.AndroidNativeAlarm && window.AndroidNativeAlarm.loadTripsBackup) {
+        const backupRaw = window.AndroidNativeAlarm.loadTripsBackup();
+        if (backupRaw && backupRaw.length > 2) {
+          const parsed = JSON.parse(backupRaw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            localStorage.setItem(this.TRIPS_KEY, backupRaw);
+            console.log('Restored trips from Native SharedPreferences backup:', parsed.length);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('State recovery check error:', e);
+    }
   }
 
   /* ================== TRIPS ================== */
 
-  getTrips() {
+  getLocalTrips() {
     try {
       const raw = localStorage.getItem(this.TRIPS_KEY);
       return raw ? JSON.parse(raw) : [];
@@ -20,8 +42,37 @@ class CaptainStorage {
     }
   }
 
+  getTrips() {
+    let trips = this.getLocalTrips();
+    // If empty in LocalStorage, attempt native fallback
+    if ((!trips || trips.length === 0) && window.AndroidNativeAlarm && window.AndroidNativeAlarm.loadTripsBackup) {
+      try {
+        const nativeRaw = window.AndroidNativeAlarm.loadTripsBackup();
+        if (nativeRaw && nativeRaw.length > 2) {
+          trips = JSON.parse(nativeRaw);
+          localStorage.setItem(this.TRIPS_KEY, nativeRaw);
+        }
+      } catch (e) {}
+    }
+    return trips || [];
+  }
+
   saveTrips(trips) {
-    localStorage.setItem(this.TRIPS_KEY, JSON.stringify(trips));
+    const jsonStr = JSON.stringify(trips);
+    try {
+      localStorage.setItem(this.TRIPS_KEY, jsonStr);
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
+    }
+
+    // Native SharedPreferences Backup
+    if (window.AndroidNativeAlarm && window.AndroidNativeAlarm.saveTripsBackup) {
+      try {
+        window.AndroidNativeAlarm.saveTripsBackup(jsonStr);
+      } catch (e) {
+        console.warn('Native SharedPreferences backup error:', e);
+      }
+    }
   }
 
   addTrip(trip) {

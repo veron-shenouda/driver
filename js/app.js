@@ -1,14 +1,20 @@
 /**
- * Production-Ready Application Controller (Zero Bloat)
- * Live Arabic Clock, Native Android Alarm, Instant Contact Import, Test Alarm Trigger
+ * Production-Grade Application Controller
+ * Sleek Modern UI, Live Arabic Clock, Native Android Alarm Sync, Voice Scheduler, Data Recovery
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   // Elements
   const tripsContainer = document.getElementById('tripsContainer');
+  const tripsCountBadge = document.getElementById('tripsCountBadge');
   const voiceFabTouch = document.getElementById('voiceFabTouch');
+  const voiceStatusTitle = document.getElementById('voiceStatusTitle');
+  const voiceStatusSub = document.getElementById('voiceStatusSub');
+
   const toastBar = document.getElementById('toastBar');
   const toastText = document.getElementById('toastText');
+  const toastIcon = document.getElementById('toastIcon');
+
   const btnBatteryFix = document.getElementById('btnBatteryFix');
   const btnTestAlarm = document.getElementById('btnTestAlarm');
   const btnImportContact = document.getElementById('btnImportContact');
@@ -18,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const liveClockPeriod = document.getElementById('liveClockPeriod');
   const liveClockDate = document.getElementById('liveClockDate');
 
-  // Modal
+  // Modal Elements
   const modalLayer = document.getElementById('modalLayer');
   const btnOpenManual = document.getElementById('btnOpenManual');
   const btnCloseModal = document.getElementById('btnCloseModal');
@@ -28,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateLiveClock() {
     const now = new Date();
 
-    // 12-Hour format components
+    // 12-Hour format
     let hours = now.getHours();
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
@@ -46,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
       liveClockPeriod.textContent = periodArabic;
     }
     if (liveClockDate) {
-      const options = { weekday: 'long', day: 'numeric', month: 'long' };
+      const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
       liveClockDate.textContent = now.toLocaleDateString('ar-EG', options);
     }
   }
@@ -57,10 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ================== 2. TEST ALARM BUTTON (Instant Verification) ================== */
   if (btnTestAlarm) {
     btnTestAlarm.addEventListener('click', () => {
-      showToast('جاري تشغيل تجربة منبه كابتن المشاوير بأعلى صوت! 🔔');
+      showToast('جاري تشغيل تجربة منبه كابتن المشاوير بأعلى صوت! 🔔', '🔔');
       if (window.nativeAlarmScheduler) {
         window.nativeAlarmScheduler.testAlarmSound(() => {
-          showToast('تم إيقاف صوت التنبيه بنجاح');
+          showToast('تم إيقاف صوت التنبيه بنجاح ✅', '✅');
         });
       }
     });
@@ -69,42 +75,60 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ================== 3. ZERO-CLICK VOICE SCHEDULER ================== */
   const voiceScheduler = new window.VoiceScheduler({
     onTripCreated: async (savedTrip) => {
-      showToast(`تم حفظ مشوار: ${savedTrip.clientName} ⚡`);
+      showToast(`تم حفظ مشوار: ${savedTrip.clientName} ⚡`, '⚡');
       if (window.nativeAlarmScheduler) {
         await window.nativeAlarmScheduler.scheduleAlarm(savedTrip);
       }
       renderTrips();
     },
-    onStateChange: (state) => {
+    onStateChange: (state, message) => {
+      if (!voiceFabTouch) return;
+
       if (state === 'listening') {
         voiceFabTouch.classList.add('listening');
-        voiceFabTouch.innerHTML = '<span>🔴</span> <span>جاري الاستماع... اتكلم يا كابتن</span>';
+        if (voiceStatusTitle) voiceStatusTitle.textContent = 'جارٍ الاستماع... اتكلم يا كابتن 🎙️';
+        if (voiceStatusSub) voiceStatusSub.textContent = 'تحدث بوضوح باسم العميل والموعد...';
+      } else if (state === 'processing') {
+        voiceFabTouch.classList.remove('listening');
+        if (voiceStatusTitle) voiceStatusTitle.textContent = 'جارٍ الفهم والحفظ التلقائي... ⚡';
+        if (voiceStatusSub) voiceStatusSub.textContent = 'جاري حفظ المشوار وتفعيل المنبه الصوتي';
+      } else if (state === 'committed') {
+        voiceFabTouch.classList.remove('listening');
+        if (voiceStatusTitle) voiceStatusTitle.textContent = message || 'تم حفظ المشوار بنجاح! ✅';
+        if (voiceStatusSub) voiceStatusSub.textContent = 'تم إدراج الرحلة في الجدول وتأكيد المنبه';
       } else {
         voiceFabTouch.classList.remove('listening');
-        voiceFabTouch.innerHTML = '<span>🎙️</span> <span>تحدث لتسجيل مشوار فوري ⚡</span>';
+        if (voiceStatusTitle) voiceStatusTitle.textContent = 'اضغط للتحدث لتسجيل مشوار ⚡';
+        if (voiceStatusSub) voiceStatusSub.textContent = 'مثال: "مشوار لأحمد بكرة 5 مساءً"';
       }
     },
     onError: (err) => {
-      showToast(err);
+      showToast(err, '⚠️');
     }
   });
 
-  voiceFabTouch.addEventListener('click', () => {
-    if (window.soundEffects) window.soundEffects.init();
-    voiceScheduler.startListening();
-  });
+  if (voiceFabTouch) {
+    voiceFabTouch.addEventListener('click', async () => {
+      if (window.soundEffects) window.soundEffects.init();
+      await voiceScheduler.startListening();
+    });
+  }
 
-  /* ================== 4. TRIPS RENDERING & NATIVE ALARM ================== */
+  /* ================== 4. TRIPS RENDERING & RECOVERY ================== */
   function renderTrips() {
     const trips = window.captainStorage.getTrips();
     if (!tripsContainer) return;
+
+    if (tripsCountBadge) {
+      tripsCountBadge.textContent = `${trips.length} ${trips.length === 1 ? 'مشوار' : 'مشاوير'}`;
+    }
 
     if (trips.length === 0) {
       tripsContainer.innerHTML = `
         <div class="empty-box">
           <div class="empty-icon">🚕</div>
-          <div class="empty-title">لا توجد مشاوير مسجلة اليوم</div>
-          <div class="empty-sub">اضغط على زر المايك الأزرق بالأسفل وتكلم لتسجيل أي مشوار فوراً.</div>
+          <div class="empty-title">لا توجد مشاوير مسجلة حالياً</div>
+          <div class="empty-sub">اضغط على بطاقة الصوت الزرقاء أعلاه وتكلم لتسجيل أي مشوار فوراً.</div>
         </div>
       `;
       return;
@@ -116,37 +140,49 @@ document.addEventListener('DOMContentLoaded', () => {
         : '#';
 
       const isCompleted = trip.status === 'completed';
+      const initial = trip.clientName ? trip.clientName.trim().charAt(0) : 'ع';
 
       return `
         <div class="trip-card ${isCompleted ? 'completed' : ''}" data-id="${trip.id}">
-          <div class="card-header-row">
-            <span class="category-tag ${trip.type}">
-              ${trip.typeIcon} ${trip.typeLabel}
+          <div class="card-top-bar">
+            <span class="category-tag ${trip.type || 'general'}">
+              ${trip.typeIcon || '🚗'} ${trip.typeLabel || 'مشوار خاص'}
             </span>
-            <span class="card-price">${trip.price ? trip.price + ' ج.م' : '---'}</span>
+            <span class="card-price-badge">${trip.price ? trip.price + ' ج.م' : 'بدون أجرة'}</span>
           </div>
 
-          <div class="card-client-name">
-            👤 ${escapeHtml(trip.clientName)}
+          <div class="card-client-row">
+            <div class="client-avatar">${initial}</div>
+            <div class="client-details">
+              <div class="client-name">👤 ${escapeHtml(trip.clientName)}</div>
+              ${trip.clientPhone ? `
+                <div class="client-phone-wrap btn-card-call" data-id="${trip.id}">
+                  📞 ${trip.clientPhone}
+                </div>
+              ` : `
+                <div class="client-phone-wrap btn-prompt-phone" data-id="${trip.id}" style="color: var(--text-muted)">
+                  ➕ إضافة رقم هاتف
+                </div>
+              `}
+            </div>
           </div>
-          ${trip.clientPhone ? `<div class="card-client-phone">📞 ${trip.clientPhone}</div>` : ''}
 
           <div class="card-timing-box">
-            <div class="timing-row date">
+            <div class="timing-item date">
               <span>📅</span> <span>${escapeHtml(trip.dateDisplay || trip.date)}</span>
             </div>
-            <div class="timing-row time">
+            <div class="timing-item time">
               <span>⏰</span> <span>${escapeHtml(trip.timeDisplay || trip.time)}</span>
             </div>
           </div>
 
           <div class="card-actions-col">
-            <!-- DIRECT NATIVE ALARM ANCHOR (Direct Clock App / AlarmManager launch) -->
+            <!-- DIRECT NATIVE ALARM ANCHOR -->
             <a href="${alarmIntentUri}" class="btn-alarm-anchor btn-action-alarm" data-id="${trip.id}">
               <span>⏰</span> <span>ضبط منبه</span>
             </a>
 
-            <!-- Subrow: Direct Call, WhatsApp, Complete -->
+            <!-- Subrow: Direct Call, WhatsApp, Complete/Delete -->
             <div class="btn-subrow">
               <button class="btn-tactile call btn-card-call" data-id="${trip.id}">
                 <span>📞</span> <span>اتصال</span>
@@ -184,8 +220,18 @@ document.addEventListener('DOMContentLoaded', () => {
           e.preventDefault();
           window.nativeAlarmScheduler.scheduleAlarm(trip);
           if (window.soundEffects) window.soundEffects.playSuccessChime();
-          showToast('تم ضبط منبه النظام الصارم بنجاح! ⏰');
+          showToast('تم ضبط منبه النظام الصارم بنجاح! ⏰', '⏰');
         }
+      });
+    });
+
+    // Add phone prompt
+    document.querySelectorAll('.btn-prompt-phone').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const tripId = btn.getAttribute('data-id');
+        const trip = window.captainStorage.getTrips().find(t => t.id === tripId);
+        if (trip) promptAndSetPhone(trip);
       });
     });
 
@@ -234,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
           window.nativeAlarmScheduler.cancelAlarm(tripId);
         }
         if (window.soundEffects) window.soundEffects.playSuccessChime();
-        showToast('تم إنهاء المشوار بنجاح 👏');
+        showToast('تم إنهاء المشوار بنجاح 👏', '✅');
         renderTrips();
       });
     });
@@ -248,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.nativeAlarmScheduler) {
           window.nativeAlarmScheduler.cancelAlarm(tripId);
         }
-        showToast('تم حذف المشوار');
+        showToast('تم حذف المشوار', '🗑️');
         renderTrips();
       });
     });
@@ -258,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const entered = prompt(`ادخل رقم هاتف العميل (${trip.clientName}):`, '01');
     if (entered && entered.trim()) {
       window.captainStorage.updateTripPhone(trip.id, entered.trim());
-      showToast('تم حفظ الرقم وربطه بالعميل!');
+      showToast('تم حفظ الرقم وربطه بالعميل!', '📞');
       renderTrips();
     }
   }
@@ -283,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
               if (manualPhoneInput) manualPhoneInput.value = cleanPhone;
               if (manualNameInput && !manualNameInput.value) manualNameInput.value = cleanName;
 
-              showToast(`تم سحب رقم: ${cleanName} (${cleanPhone}) 📞`);
+              showToast(`تم سحب رقم: ${cleanName} (${cleanPhone}) 📞`, '📞');
             }
           }
         } catch (ex) {
@@ -295,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const phone = prompt('رقم هاتف العميل:', '01');
         if (phone) {
           window.captainStorage.saveClientContact(name, phone);
-          showToast(`تم حفظ رقم العميل: ${name}`);
+          showToast(`تم حفظ رقم العميل: ${name}`, '📞');
         }
       }
     });
@@ -313,76 +359,85 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ================== 7. MANUAL ADD MODAL ================== */
-  btnOpenManual.addEventListener('click', () => {
-    document.getElementById('manualDate').value = new Date().toISOString().split('T')[0];
-    document.getElementById('manualTime').value = '12:00';
-    modalLayer.classList.add('active');
-  });
+  if (btnOpenManual) {
+    btnOpenManual.addEventListener('click', () => {
+      document.getElementById('manualDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('manualTime').value = '12:00';
+      modalLayer.classList.add('active');
+    });
+  }
 
-  btnCloseModal.addEventListener('click', () => {
-    modalLayer.classList.remove('active');
-  });
+  if (btnCloseModal) {
+    btnCloseModal.addEventListener('click', () => {
+      modalLayer.classList.remove('active');
+    });
+  }
 
-  modalLayer.addEventListener('click', (e) => {
-    if (e.target === modalLayer) modalLayer.classList.remove('active');
-  });
+  if (modalLayer) {
+    modalLayer.addEventListener('click', (e) => {
+      if (e.target === modalLayer) modalLayer.classList.remove('active');
+    });
+  }
 
-  cleanManualForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = document.getElementById('manualName').value.trim() || 'عميل خاص';
-    const phone = document.getElementById('manualPhone').value.trim();
-    const type = document.getElementById('manualType').value;
-    const date = document.getElementById('manualDate').value;
-    const time = document.getElementById('manualTime').value;
-    const priceVal = parseInt(document.getElementById('manualPrice').value, 10);
+  if (cleanManualForm) {
+    cleanManualForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('manualName').value.trim() || 'عميل خاص';
+      const phone = document.getElementById('manualPhone').value.trim();
+      const type = document.getElementById('manualType').value;
+      const date = document.getElementById('manualDate').value;
+      const time = document.getElementById('manualTime').value;
+      const priceVal = parseInt(document.getElementById('manualPrice').value, 10);
 
-    const typeMeta = {
-      airport: { label: 'مشوار مطار', icon: '✈️' },
-      travel: { label: 'سفر محافظات', icon: '🛣️' },
-      school: { label: 'توصيلة مدرسة', icon: '🎒' },
-      general: { label: 'مشوار خاص VIP', icon: '🚗' }
-    }[type] || { label: 'مشوار خاص', icon: '🚗' };
+      const typeMeta = {
+        airport: { label: 'مشوار مطار', icon: '✈️' },
+        travel: { label: 'سفر محافظات', icon: '🛣️' },
+        school: { label: 'توصيلة مدرسة', icon: '🎒' },
+        general: { label: 'مشوار خاص VIP', icon: '🚗' }
+      }[type] || { label: 'مشوار خاص', icon: '🚗' };
 
-    const [hh, mm] = time.split(':');
-    const hour24 = parseInt(hh, 10);
-    const minutes = parseInt(mm, 10);
+      const [hh, mm] = time.split(':');
+      const hour24 = parseInt(hh, 10);
+      const minutes = parseInt(mm, 10);
 
-    const newTrip = {
-      id: 'trip_' + Date.now(),
-      raw: '',
-      clientName: name,
-      clientPhone: window.captainStorage.normalizePhone(phone),
-      type: type,
-      typeLabel: typeMeta.label,
-      typeIcon: typeMeta.icon,
-      date: date,
-      dateDisplay: date,
-      time: time,
-      timeDisplay: time,
-      hour24: hour24,
-      minutes: minutes,
-      price: isNaN(priceVal) ? null : priceVal,
-      status: 'upcoming',
-      createdAt: new Date().toISOString()
-    };
+      const newTrip = {
+        id: 'trip_' + Date.now(),
+        raw: '',
+        clientName: name,
+        clientPhone: window.captainStorage.normalizePhone(phone),
+        type: type,
+        typeLabel: typeMeta.label,
+        typeIcon: typeMeta.icon,
+        date: date,
+        dateDisplay: date,
+        time: time,
+        timeDisplay: time,
+        hour24: hour24,
+        minutes: minutes,
+        price: isNaN(priceVal) ? null : priceVal,
+        status: 'upcoming',
+        createdAt: new Date().toISOString()
+      };
 
-    window.captainStorage.addTrip(newTrip);
-    if (window.nativeAlarmScheduler) {
-      await window.nativeAlarmScheduler.scheduleAlarm(newTrip);
-    }
-    if (window.soundEffects) window.soundEffects.playSuccessChime();
+      window.captainStorage.addTrip(newTrip);
+      if (window.nativeAlarmScheduler) {
+        await window.nativeAlarmScheduler.scheduleAlarm(newTrip);
+      }
+      if (window.soundEffects) window.soundEffects.playSuccessChime();
 
-    modalLayer.classList.remove('active');
-    cleanManualForm.reset();
-    showToast('تم حفظ المشوار وضبط المنبه ⚡');
-    renderTrips();
-  });
+      modalLayer.classList.remove('active');
+      cleanManualForm.reset();
+      showToast('تم حفظ المشوار وضبط المنبه ⚡', '⚡');
+      renderTrips();
+    });
+  }
 
-  /* ================== TOAST ================== */
+  /* ================== 8. TOAST NOTIFICATION ================== */
   let toastTimer = null;
-  function showToast(msg) {
+  function showToast(msg, icon = '✅') {
     if (!toastBar || !toastText) return;
     toastText.textContent = msg;
+    if (toastIcon) toastIcon.textContent = icon;
     toastBar.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
@@ -395,11 +450,26 @@ document.addEventListener('DOMContentLoaded', () => {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  // Restore and re-register exact alarms for all upcoming trips on startup
+  function restoreAlarmsOnStartup() {
+    const trips = window.captainStorage.getTrips();
+    const now = Date.now();
+    trips.forEach(trip => {
+      if (trip.status !== 'completed' && window.nativeAlarmScheduler) {
+        const triggerMillis = window.nativeAlarmScheduler.calculateTimestampMillis(trip.date, trip.hour24, trip.minutes);
+        if (triggerMillis > now) {
+          window.nativeAlarmScheduler.scheduleAlarm(trip);
+        }
+      }
+    });
+  }
+
   // Service Worker Registration
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 
-  // Initial render
+  // Initial render & alarm restoration
   renderTrips();
+  restoreAlarmsOnStartup();
 });

@@ -3,6 +3,7 @@ package com.captain.driver;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -10,6 +11,8 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.webkit.JavascriptInterface;
+import android.webkit.PermissionRequest;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -21,12 +24,14 @@ import androidx.core.content.ContextCompat;
 
 public class MainActivity extends AppCompatActivity {
     private WebView webView;
+    private static final int PERMISSION_REQ_NOTIFICATIONS = 101;
+    private static final int PERMISSION_REQ_AUDIO = 102;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Check & request runtime permissions (Notifications & Exact Alarms)
+        // Check & request runtime permissions (Notifications, Audio & Exact Alarms)
         requestRequiredPermissions();
 
         // Setup WebView
@@ -40,6 +45,20 @@ public class MainActivity extends AppCompatActivity {
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
+
+        // WebChromeClient grants Web Speech / getUserMedia Audio capture permissions automatically
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                runOnUiThread(() -> {
+                    try {
+                        request.grant(request.getResources());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+        });
 
         // Register Native Alarm Bridge directly into JavaScript window object
         webView.addJavascriptInterface(new NativeAlarmBridge(this), "AndroidNativeAlarm");
@@ -56,8 +75,15 @@ public class MainActivity extends AppCompatActivity {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS}, PERMISSION_REQ_NOTIFICATIONS);
             }
+        }
+
+        // Record Audio permission for Speech Recognition & Voice Input
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSION_REQ_AUDIO);
         }
 
         // Exact Alarm permission check for Android 12+ (API 31+)
@@ -70,6 +96,14 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(intent);
                 } catch (Exception ignored) {}
             }
+        }
+    }
+
+    public void requestAudioPermissionExplicit() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSION_REQ_AUDIO);
         }
     }
 
@@ -125,7 +159,6 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(context, "التطبيق بالفعل مستثنى من قيود البطارية! ✅", Toast.LENGTH_SHORT).show();
                     }
                 } catch (Exception e) {
-                    // Open general battery settings
                     Intent fallback = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
                     fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(fallback);
@@ -140,6 +173,38 @@ public class MainActivity extends AppCompatActivity {
                 return pm != null && !pm.isIgnoringBatteryOptimizations(context.getPackageName());
             }
             return false;
+        }
+
+        @JavascriptInterface
+        public boolean hasAudioPermission() {
+            return ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+        }
+
+        @JavascriptInterface
+        public void requestAudioPermission() {
+            if (context instanceof MainActivity) {
+                ((MainActivity) context).runOnUiThread(() -> ((MainActivity) context).requestAudioPermissionExplicit());
+            }
+        }
+
+        @JavascriptInterface
+        public void saveTripsBackup(String tripsJson) {
+            try {
+                SharedPreferences prefs = context.getSharedPreferences("captain_trips_backup_store", Context.MODE_PRIVATE);
+                prefs.edit().putString("trips_data_json", tripsJson).apply();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        @JavascriptInterface
+        public String loadTripsBackup() {
+            try {
+                SharedPreferences prefs = context.getSharedPreferences("captain_trips_backup_store", Context.MODE_PRIVATE);
+                return prefs.getString("trips_data_json", "[]");
+            } catch (Exception e) {
+                return "[]";
+            }
         }
     }
 

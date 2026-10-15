@@ -1,6 +1,6 @@
 /**
  * ZERO-CLICK AI VOICE SCHEDULER (الصوت الذكي التلقائي الفوري)
- * Web Speech API configured for ar-EG (Egyptian Arabic)
+ * Web Speech API configured for ar-EG (Egyptian Arabic) with explicit Audio Permission Handling
  * Immediately commits trip to storage and schedule on voice completion without user intervention.
  */
 
@@ -22,7 +22,7 @@ class VoiceScheduler {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      console.warn('Web Speech API is not supported in this browser.');
+      console.warn('Web Speech API is not natively supported in this webview instance.');
       this.hasSupport = false;
       return;
     }
@@ -30,15 +30,14 @@ class VoiceScheduler {
     this.hasSupport = true;
     try {
       this.recognition = new SpeechRecognition();
-      // Strict Egyptian Arabic
       this.recognition.lang = 'ar-EG';
-      this.recognition.continuous = false; // Stop immediately upon silence
-      this.recognition.interimResults = false; // Wait for final confident result
+      this.recognition.continuous = false;
+      this.recognition.interimResults = false;
       this.recognition.maxAlternatives = 1;
 
       this.recognition.onstart = () => {
         this.isListening = true;
-        this.onStateChange('listening', 'جاري الاستماع... اتكلم يا كابتن 🎙️');
+        this.onStateChange('listening', 'جارٍ الاستماع... اتكلم يا كابتن 🎙️');
         if (window.soundEffects) {
           window.soundEffects.playListeningStart();
         }
@@ -63,11 +62,12 @@ class VoiceScheduler {
 
         let userMsg = 'حدث خطأ في استقبال الصوت';
         if (event.error === 'not-allowed') {
-          userMsg = '⚠️ تم رفض إذن الميكروفون. برجاء السماح بالمايك من إعدادات المتصفح.';
+          userMsg = '⚠️ تم رفض إذن الميكروفون. برجاء السماح بصلاحية الصوت في التطبيق.';
+          this.requestPermissions();
         } else if (event.error === 'no-speech') {
-          userMsg = 'لم يتم سماع أي صوت، اضغط وجرب تاني يا كابتن.';
+          userMsg = 'لم يتم سماع أي صوت، اضغط وتكلم يا كابتن.';
         } else if (event.error === 'network') {
-          userMsg = 'تحقق من اتصال الإنترنت لخدمة الصوت أو استخدم الإدخال السريع.';
+          userMsg = 'تحقق من اتصال الإنترنت لخدمة تحويل الصوت لكلام.';
         }
 
         if (window.soundEffects) {
@@ -80,8 +80,7 @@ class VoiceScheduler {
 
       this.recognition.onend = () => {
         this.isListening = false;
-        // If state is not already 'committed', set to idle
-        this.onStateChange('idle', 'اضغط وتحدث لتسجيل مشوار فوري ⚡');
+        this.onStateChange('idle', 'اضغط للتحدث لتسجيل مشوار فوري ⚡');
       };
     } catch (e) {
       console.error('Failed to initialize SpeechRecognition:', e);
@@ -90,11 +89,40 @@ class VoiceScheduler {
   }
 
   /**
+   * Proactively request audio recording permissions from Android & Browser
+   */
+  async requestPermissions() {
+    // 1. Native Android Permission check & request
+    if (window.AndroidNativeAlarm && window.AndroidNativeAlarm.requestAudioPermission) {
+      try {
+        window.AndroidNativeAlarm.requestAudioPermission();
+      } catch (e) {}
+    }
+
+    // 2. Web MediaDevices permission trigger
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Close stream immediately once permission is verified/granted
+        stream.getTracks().forEach(track => track.stop());
+        return true;
+      } catch (err) {
+        console.warn('getUserMedia audio permission prompt result:', err);
+      }
+    }
+    return false;
+  }
+
+  /**
    * Start Voice Listening
    */
-  startListening() {
+  async startListening() {
+    // Check & request permission first
+    await this.requestPermissions();
+
     if (!this.hasSupport || !this.recognition) {
-      this.onError('خاصية الصوت غير مدعومة في هذا المتصفح، يمكنك استخدام زر المشوار السريع.');
+      // Prompt driver for quick Egyptian voice dictation
+      this.fallbackVoiceInputPrompt();
       return;
     }
 
@@ -106,13 +134,12 @@ class VoiceScheduler {
     try {
       this.recognition.start();
     } catch (e) {
-      console.warn('Speech start warning:', e);
-      // If already started, try aborting then starting
+      console.warn('Speech start error, aborting and retrying:', e);
       try {
         this.recognition.abort();
-        setTimeout(() => this.recognition.start(), 150);
+        setTimeout(() => this.recognition.start(), 200);
       } catch (err) {
-        this.onError('تعذر تشغيل الميكروفون حالياً، جرب مرة أخرى.');
+        this.fallbackVoiceInputPrompt();
       }
     }
   }
@@ -121,31 +148,40 @@ class VoiceScheduler {
     if (this.recognition && this.isListening) {
       try {
         this.recognition.stop();
-      } catch (e) {
-        // Ignore
-      }
+      } catch (e) {}
       this.isListening = false;
+    }
+  }
+
+  /**
+   * Fallback for devices where Webview Web Speech is disabled:
+   * Uses simple dictation popup where keyboard's native mic works 100%
+   */
+  fallbackVoiceInputPrompt() {
+    const spoken = prompt('اكتب أو اضغط على مايك الكيبورد وتحدث بالمشوار (مثال: مشوار لأحمد بكرة الساعة 5 مساءً بـ 250):');
+    if (spoken && spoken.trim()) {
+      this.processZeroClickCommit(spoken.trim());
     }
   }
 
   /**
    * CORE ZERO-CLICK COMMIT PIPELINE:
    * 1. Parse sentence via Egyptian Arabic NLP engine
-   * 2. Immediately persist to localStorage database
-   * 3. Play luxury success chime
-   * 4. Prepend to schedule UI instantly
+   * 2. Immediately persist to localStorage & Native SharedPreferences
+   * 3. Play pleasant success chime
+   * 4. Prepend to schedule UI instantly & trigger exact native alarm
    */
   processZeroClickCommit(transcript) {
     if (!transcript || transcript.trim().length === 0) {
       return;
     }
 
-    this.onStateChange('processing', 'جاري الحفظ الفوري تلقائياً... ⚡');
+    this.onStateChange('processing', 'جارٍ الفهم والحفظ التلقائي... ⚡');
 
     // 1. NLP Parse
     const parsedTrip = this.parser.parse(transcript);
 
-    // 2. Database Write (localStorage)
+    // 2. Database Write (localStorage + Native SharedPreferences)
     const savedTrip = window.captainStorage.addTrip(parsedTrip);
 
     // 3. Audio Chime (Audible Pleasant Feedback)
@@ -154,25 +190,24 @@ class VoiceScheduler {
     }
 
     // 4. Update UI State & Trigger Callback
-    this.onStateChange('committed', `تم حفظ المشوار فوراً: ${savedTrip.clientName} (${savedTrip.typeLabel})`);
+    this.onStateChange('committed', `تم حفظ المشوار: ${savedTrip.clientName} (${savedTrip.typeLabel}) ✅`);
     this.onTripCreated(savedTrip, transcript);
 
     // Reset indicator after 3 seconds
     setTimeout(() => {
       if (!this.isListening) {
-        this.onStateChange('idle', 'اضغط وتحدث لتسجيل مشوار فوري ⚡');
+        this.onStateChange('idle', 'اضغط للتحدث لتسجيل مشوار فوري ⚡');
       }
     }, 3200);
   }
 
   handleEmptySpeech() {
     this.isListening = false;
-    this.onStateChange('idle', 'لم يتم التعرف على كلمات، اضغط وجرب تاني.');
+    this.onStateChange('idle', 'لم يتم التعرف على كلمات، اضغط وجرب تاني يا كابتن.');
   }
 
   /**
-   * Fast Emulator / Preset Egyptian Voice Tester
-   * Allows the driver or reviewer to test real Egyptian sentences with 1 click
+   * Test simulated sentence directly
    */
   simulateVoiceSentence(sampleSentence) {
     this.onStateChange('listening', `محاكاة صوت: "${sampleSentence}"`);
