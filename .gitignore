@@ -11,6 +11,7 @@ android/*.iml
 android/app/*.iml
 .idea/
 *.log
+apk-output/
 
 # OS generated
 .DS_Store
