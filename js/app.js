@@ -1,6 +1,6 @@
 /**
- * Production-Grade Application Controller
- * Sleek Modern UI, Live Arabic Clock, Native Android Alarm Sync, Voice Scheduler, Data Recovery
+ * Production-Ready Driver Application Controller
+ * Minimal Fintech Design System, Live Arabic Clock, Alarm Sync, Voice Scheduler, Data Recovery
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -8,16 +8,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const tripsContainer = document.getElementById('tripsContainer');
   const tripsCountBadge = document.getElementById('tripsCountBadge');
   const voiceFabTouch = document.getElementById('voiceFabTouch');
+  const voiceCard = document.querySelector('.voice-card');
+  const voiceBadge = document.getElementById('voiceBadge');
   const voiceStatusTitle = document.getElementById('voiceStatusTitle');
   const voiceStatusSub = document.getElementById('voiceStatusSub');
 
   const toastBar = document.getElementById('toastBar');
   const toastText = document.getElementById('toastText');
-  const toastIcon = document.getElementById('toastIcon');
 
   const btnBatteryFix = document.getElementById('btnBatteryFix');
   const btnTestAlarm = document.getElementById('btnTestAlarm');
   const btnImportContact = document.getElementById('btnImportContact');
+  const btnQuickAddTrip = document.getElementById('btnQuickAddTrip');
 
   // Live Clock Elements
   const liveClockTime = document.getElementById('liveClockTime');
@@ -30,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCloseModal = document.getElementById('btnCloseModal');
   const cleanManualForm = document.getElementById('cleanManualForm');
 
-  /* ================== 1. LIVE REAL-TIME CLOCK (ar-EG) ================== */
+  /* ================== 1. MINIMAL LIVE REAL-TIME CLOCK ================== */
   function updateLiveClock() {
     const now = new Date();
 
@@ -39,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
     const isPm = hours >= 12;
-    const periodArabic = isPm ? 'مساءً' : 'صباحاً';
+    const periodArabic = isPm ? 'م' : 'ص';
 
     hours = hours % 12;
     if (hours === 0) hours = 12;
@@ -60,13 +62,13 @@ document.addEventListener('DOMContentLoaded', () => {
   updateLiveClock();
   setInterval(updateLiveClock, 1000);
 
-  /* ================== 2. TEST ALARM BUTTON (Instant Verification) ================== */
+  /* ================== 2. TEST ALARM TRIGGER ================== */
   if (btnTestAlarm) {
     btnTestAlarm.addEventListener('click', () => {
-      showToast('جاري تشغيل تجربة منبه كابتن المشاوير بأعلى صوت! 🔔', '🔔');
+      showToast('تشغيل تجربة منبه النظام الصارم');
       if (window.nativeAlarmScheduler) {
         window.nativeAlarmScheduler.testAlarmSound(() => {
-          showToast('تم إيقاف صوت التنبيه بنجاح ✅', '✅');
+          showToast('تم إيقاف صوت التنبيه');
         });
       }
     });
@@ -75,35 +77,39 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ================== 3. ZERO-CLICK VOICE SCHEDULER ================== */
   const voiceScheduler = new window.VoiceScheduler({
     onTripCreated: async (savedTrip) => {
-      showToast(`تم حفظ مشوار: ${savedTrip.clientName} ⚡`, '⚡');
+      showToast(`تم حفظ مشوار: ${savedTrip.clientName}`);
       if (window.nativeAlarmScheduler) {
         await window.nativeAlarmScheduler.scheduleAlarm(savedTrip);
       }
       renderTrips();
     },
     onStateChange: (state, message) => {
-      if (!voiceFabTouch) return;
+      if (!voiceCard) return;
 
       if (state === 'listening') {
-        voiceFabTouch.classList.add('listening');
-        if (voiceStatusTitle) voiceStatusTitle.textContent = 'جارٍ الاستماع... اتكلم يا كابتن 🎙️';
-        if (voiceStatusSub) voiceStatusSub.textContent = 'تحدث بوضوح باسم العميل والموعد...';
+        voiceCard.classList.add('listening');
+        if (voiceBadge) voiceBadge.textContent = 'جارٍ الاستماع...';
+        if (voiceStatusTitle) voiceStatusTitle.textContent = 'جارٍ الاستماع... اتكلم يا كابتن';
+        if (voiceStatusSub) voiceStatusSub.textContent = 'تحدث بوضوح باسم العميل والموعد والوجهة';
       } else if (state === 'processing') {
-        voiceFabTouch.classList.remove('listening');
-        if (voiceStatusTitle) voiceStatusTitle.textContent = 'جارٍ الفهم والحفظ التلقائي... ⚡';
-        if (voiceStatusSub) voiceStatusSub.textContent = 'جاري حفظ المشوار وتفعيل المنبه الصوتي';
+        voiceCard.classList.remove('listening');
+        if (voiceBadge) voiceBadge.textContent = 'معالجة';
+        if (voiceStatusTitle) voiceStatusTitle.textContent = 'جارٍ الفهم والحفظ التلقائي...';
+        if (voiceStatusSub) voiceStatusSub.textContent = 'جاري تسجيل المشوار وجدولة المنبه';
       } else if (state === 'committed') {
-        voiceFabTouch.classList.remove('listening');
-        if (voiceStatusTitle) voiceStatusTitle.textContent = message || 'تم حفظ المشوار بنجاح! ✅';
-        if (voiceStatusSub) voiceStatusSub.textContent = 'تم إدراج الرحلة في الجدول وتأكيد المنبه';
+        voiceCard.classList.remove('listening');
+        if (voiceBadge) voiceBadge.textContent = 'تم الحفظ';
+        if (voiceStatusTitle) voiceStatusTitle.textContent = message || 'تم حفظ المشوار وتفعيل المنبه';
+        if (voiceStatusSub) voiceStatusSub.textContent = 'تم إدراج الرحلة في الجدول بنجاح';
       } else {
-        voiceFabTouch.classList.remove('listening');
-        if (voiceStatusTitle) voiceStatusTitle.textContent = 'اضغط للتحدث لتسجيل مشوار ⚡';
-        if (voiceStatusSub) voiceStatusSub.textContent = 'مثال: "مشوار لأحمد بكرة 5 مساءً"';
+        voiceCard.classList.remove('listening');
+        if (voiceBadge) voiceBadge.textContent = 'جاهز';
+        if (voiceStatusTitle) voiceStatusTitle.textContent = 'اضغط وتحدث لتسجيل مشوار فوري';
+        if (voiceStatusSub) voiceStatusSub.textContent = 'مثال: "مشوار للمطار بكرة 6 الصبح بـ 400 جنيه"';
       }
     },
     onError: (err) => {
-      showToast(err, '⚠️');
+      showToast(err);
     }
   });
 
@@ -114,21 +120,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* ================== 4. TRIPS RENDERING & RECOVERY ================== */
+  /* ================== 4. MINIMALIST TRIPS RENDERING & RECOVERY ================== */
   function renderTrips() {
     const trips = window.captainStorage.getTrips();
     if (!tripsContainer) return;
 
     if (tripsCountBadge) {
-      tripsCountBadge.textContent = `${trips.length} ${trips.length === 1 ? 'مشوار' : 'مشاوير'}`;
+      tripsCountBadge.textContent = `${trips.length} ${trips.length === 1 ? 'رحلة' : 'رحلات'}`;
     }
 
     if (trips.length === 0) {
       tripsContainer.innerHTML = `
-        <div class="empty-box">
-          <div class="empty-icon">🚕</div>
-          <div class="empty-title">لا توجد مشاوير مسجلة حالياً</div>
-          <div class="empty-sub">اضغط على بطاقة الصوت الزرقاء أعلاه وتكلم لتسجيل أي مشوار فوراً.</div>
+        <div class="empty-state-box">
+          <div class="empty-state-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </div>
+          <div class="empty-state-text">لا توجد رحلات مجدولة لليوم</div>
         </div>
       `;
       return;
@@ -140,68 +152,92 @@ document.addEventListener('DOMContentLoaded', () => {
         : '#';
 
       const isCompleted = trip.status === 'completed';
-      const initial = trip.clientName ? trip.clientName.trim().charAt(0) : 'ع';
+      const cleanType = trip.typeLabel ? trip.typeLabel.replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim() : 'مشوار خاص';
 
       return `
         <div class="trip-card ${isCompleted ? 'completed' : ''}" data-id="${trip.id}">
-          <div class="card-top-bar">
-            <span class="category-tag ${trip.type || 'general'}">
-              ${trip.typeIcon || '🚗'} ${trip.typeLabel || 'مشوار خاص'}
+          <div class="trip-card-top">
+            <span class="trip-tag">
+              ${cleanType}
             </span>
-            <span class="card-price-badge">${trip.price ? trip.price + ' ج.م' : 'بدون أجرة'}</span>
+            <span class="trip-fare">${trip.price ? trip.price + ' ج.م' : 'بدون تحديد'}</span>
           </div>
 
-          <div class="card-client-row">
-            <div class="client-avatar">${initial}</div>
-            <div class="client-details">
-              <div class="client-name">👤 ${escapeHtml(trip.clientName)}</div>
-              ${trip.clientPhone ? `
-                <div class="client-phone-wrap btn-card-call" data-id="${trip.id}">
-                  📞 ${trip.clientPhone}
-                </div>
-              ` : `
-                <div class="client-phone-wrap btn-prompt-phone" data-id="${trip.id}" style="color: var(--text-muted)">
-                  ➕ إضافة رقم هاتف
-                </div>
-              `}
+          <div class="trip-client-info">
+            <span class="trip-client-name">${escapeHtml(trip.clientName)}</span>
+            ${trip.clientPhone ? `
+              <span class="trip-client-phone btn-card-call" data-id="${trip.id}">
+                ${trip.clientPhone}
+              </span>
+            ` : `
+              <span class="trip-client-phone btn-prompt-phone" data-id="${trip.id}" style="color: var(--text-muted)">
+                + إضافة هاتف
+              </span>
+            `}
+          </div>
+
+          <div class="trip-timing-row">
+            <div class="timing-badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>${escapeHtml(trip.dateDisplay || trip.date)}</span>
+            </div>
+            <div class="timing-badge highlight">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>${escapeHtml(trip.timeDisplay || trip.time)}</span>
             </div>
           </div>
 
-          <div class="card-timing-box">
-            <div class="timing-item date">
-              <span>📅</span> <span>${escapeHtml(trip.dateDisplay || trip.date)}</span>
-            </div>
-            <div class="timing-item time">
-              <span>⏰</span> <span>${escapeHtml(trip.timeDisplay || trip.time)}</span>
-            </div>
-          </div>
-
-          <div class="card-actions-col">
-            <!-- DIRECT NATIVE ALARM ANCHOR -->
-            <a href="${alarmIntentUri}" class="btn-alarm-anchor btn-action-alarm" data-id="${trip.id}">
-              <span>⏰</span> <span>ضبط منبه</span>
+          <div class="trip-actions-row">
+            <!-- Direct Alarm Anchor -->
+            <a href="${alarmIntentUri}" class="btn-card-alarm btn-action-alarm" data-id="${trip.id}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>ضبط منبه</span>
             </a>
 
-            <!-- Subrow: Direct Call, WhatsApp, Complete/Delete -->
-            <div class="btn-subrow">
-              <button class="btn-tactile call btn-card-call" data-id="${trip.id}">
-                <span>📞</span> <span>اتصال</span>
-              </button>
+            <!-- Call -->
+            <button class="btn-card-small call btn-card-call" data-id="${trip.id}" title="اتصال">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+              <span>اتصال</span>
+            </button>
 
-              <button class="btn-tactile wa btn-card-wa" data-id="${trip.id}">
-                <span>💬</span> <span>واتساب</span>
-              </button>
+            <!-- WhatsApp -->
+            <button class="btn-card-small btn-card-wa" data-id="${trip.id}" title="واتساب">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              </svg>
+              <span>واتساب</span>
+            </button>
 
-              ${!isCompleted ? `
-                <button class="btn-tactile complete btn-card-complete" data-id="${trip.id}">
-                  <span>✅</span> <span>تم</span>
-                </button>
-              ` : `
-                <button class="btn-tactile delete btn-card-delete" data-id="${trip.id}">
-                  <span>🗑️</span> <span>حذف</span>
-                </button>
-              `}
-            </div>
+            <!-- Complete / Delete -->
+            ${!isCompleted ? `
+              <button class="btn-card-small btn-card-complete" data-id="${trip.id}" title="إنهاء المشوار">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>تم</span>
+              </button>
+            ` : `
+              <button class="btn-card-small delete btn-card-delete" data-id="${trip.id}" title="حذف">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                <span>حذف</span>
+              </button>
+            `}
           </div>
         </div>
       `;
@@ -211,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function attachTripEvents() {
-    // Alarm click: schedule via Native AlarmManager if in native APK
+    // Alarm click
     document.querySelectorAll('.btn-action-alarm').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const tripId = btn.getAttribute('data-id');
@@ -220,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
           e.preventDefault();
           window.nativeAlarmScheduler.scheduleAlarm(trip);
           if (window.soundEffects) window.soundEffects.playSuccessChime();
-          showToast('تم ضبط منبه النظام الصارم بنجاح! ⏰', '⏰');
+          showToast('تم تأكيد ضبط منبه النظام الصارم');
         }
       });
     });
@@ -235,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Direct Call
+    // Call
     document.querySelectorAll('.btn-card-call').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -251,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Direct WhatsApp
+    // WhatsApp
     document.querySelectorAll('.btn-card-wa').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -262,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (trip.clientPhone) {
           let cleanPhone = trip.clientPhone.replace(/[^0-9]/g, '');
           if (cleanPhone.startsWith('0')) cleanPhone = '20' + cleanPhone.substring(1);
-          const msg = encodeURIComponent(`السلام عليكم يا فندم، أنا الكابتن بخصوص مشوار حضرتك يوم ${trip.dateDisplay || 'المحدد'}.`);
+          const msg = encodeURIComponent(`السلام عليكم يا فندم، بخصوص مشوار حضرتك يوم ${trip.dateDisplay || 'المحدد'}.`);
           window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
         } else {
           promptAndSetPhone(trip);
@@ -270,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Mark Complete
+    // Complete
     document.querySelectorAll('.btn-card-complete').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -280,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
           window.nativeAlarmScheduler.cancelAlarm(tripId);
         }
         if (window.soundEffects) window.soundEffects.playSuccessChime();
-        showToast('تم إنهاء المشوار بنجاح 👏', '✅');
+        showToast('تم إنهاء المشوار بنجاح');
         renderTrips();
       });
     });
@@ -294,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.nativeAlarmScheduler) {
           window.nativeAlarmScheduler.cancelAlarm(tripId);
         }
-        showToast('تم حذف المشوار', '🗑️');
+        showToast('تم حذف المشوار');
         renderTrips();
       });
     });
@@ -304,12 +340,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const entered = prompt(`ادخل رقم هاتف العميل (${trip.clientName}):`, '01');
     if (entered && entered.trim()) {
       window.captainStorage.updateTripPhone(trip.id, entered.trim());
-      showToast('تم حفظ الرقم وربطه بالعميل!', '📞');
+      showToast('تم حفظ رقم الهاتف');
       renderTrips();
     }
   }
 
-  /* ================== 5. INSTANT CONTACT IMPORT ================== */
+  /* ================== 5. CONTACT IMPORT ================== */
   if (btnImportContact) {
     btnImportContact.addEventListener('click', async () => {
       if ('contacts' in navigator && 'ContactsManager' in window) {
@@ -329,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
               if (manualPhoneInput) manualPhoneInput.value = cleanPhone;
               if (manualNameInput && !manualNameInput.value) manualNameInput.value = cleanName;
 
-              showToast(`تم سحب رقم: ${cleanName} (${cleanPhone}) 📞`, '📞');
+              showToast(`تم سحب رقم: ${cleanName}`);
             }
           }
         } catch (ex) {
@@ -341,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const phone = prompt('رقم هاتف العميل:', '01');
         if (phone) {
           window.captainStorage.saveClientContact(name, phone);
-          showToast(`تم حفظ رقم العميل: ${name}`, '📞');
+          showToast(`تم حفظ رقم العميل: ${name}`);
         }
       }
     });
@@ -353,23 +389,24 @@ document.addEventListener('DOMContentLoaded', () => {
       if (window.nativeAlarmScheduler && window.nativeAlarmScheduler.isNative) {
         window.nativeAlarmScheduler.requestBatteryExemption();
       } else {
-        alert('لتشغيل المنبه بعد قفل التطبيق أو إعادة تشغيل الهاتف:\n\n1. ادخل على إعدادات الهاتف (Settings)\n2. اختر التطبيقات (Apps) -> كابتن المشاوير\n3. ادخل على البطارية (Battery) واختر: "بلا قيود" (No restrictions / Unrestricted)\n4. فعّل التشغيل التلقائي (Auto-start) في هواتف شاومي وسامسونج.');
+        alert('لحماية المنبه من إغلاق النظام بعد غلق التطبيق:\n\n1. ادخل على إعدادات الهاتف\n2. اختر التطبيقات -> كابتن المشاوير\n3. ادخل على البطارية واختر: "بلا قيود" (No restrictions)\n4. فعّل التشغيل التلقائي (Auto-start).');
       }
     });
   }
 
   /* ================== 7. MANUAL ADD MODAL ================== */
-  if (btnOpenManual) {
-    btnOpenManual.addEventListener('click', () => {
-      document.getElementById('manualDate').value = new Date().toISOString().split('T')[0];
-      document.getElementById('manualTime').value = '12:00';
-      modalLayer.classList.add('active');
-    });
-  }
+  const openModal = () => {
+    document.getElementById('manualDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('manualTime').value = '12:00';
+    if (modalLayer) modalLayer.classList.add('active');
+  };
+
+  if (btnOpenManual) btnOpenManual.addEventListener('click', openModal);
+  if (btnQuickAddTrip) btnQuickAddTrip.addEventListener('click', openModal);
 
   if (btnCloseModal) {
     btnCloseModal.addEventListener('click', () => {
-      modalLayer.classList.remove('active');
+      if (modalLayer) modalLayer.classList.remove('active');
     });
   }
 
@@ -390,11 +427,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const priceVal = parseInt(document.getElementById('manualPrice').value, 10);
 
       const typeMeta = {
-        airport: { label: 'مشوار مطار', icon: '✈️' },
-        travel: { label: 'سفر محافظات', icon: '🛣️' },
-        school: { label: 'توصيلة مدرسة', icon: '🎒' },
-        general: { label: 'مشوار خاص VIP', icon: '🚗' }
-      }[type] || { label: 'مشوار خاص', icon: '🚗' };
+        airport: { label: 'مشوار مطار' },
+        travel: { label: 'سفر محافظات' },
+        school: { label: 'توصيلة مدرسة' },
+        general: { label: 'مشوار خاص' }
+      }[type] || { label: 'مشوار خاص' };
 
       const [hh, mm] = time.split(':');
       const hour24 = parseInt(hh, 10);
@@ -407,7 +444,6 @@ document.addEventListener('DOMContentLoaded', () => {
         clientPhone: window.captainStorage.normalizePhone(phone),
         type: type,
         typeLabel: typeMeta.label,
-        typeIcon: typeMeta.icon,
         date: date,
         dateDisplay: date,
         time: time,
@@ -425,24 +461,23 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (window.soundEffects) window.soundEffects.playSuccessChime();
 
-      modalLayer.classList.remove('active');
+      if (modalLayer) modalLayer.classList.remove('active');
       cleanManualForm.reset();
-      showToast('تم حفظ المشوار وضبط المنبه ⚡', '⚡');
+      showToast('تم حفظ المشوار وضبط المنبه');
       renderTrips();
     });
   }
 
   /* ================== 8. TOAST NOTIFICATION ================== */
   let toastTimer = null;
-  function showToast(msg, icon = '✅') {
+  function showToast(msg) {
     if (!toastBar || !toastText) return;
     toastText.textContent = msg;
-    if (toastIcon) toastIcon.textContent = icon;
     toastBar.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
       toastBar.classList.remove('show');
-    }, 3500);
+    }, 3200);
   }
 
   function escapeHtml(str) {
@@ -450,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  // Restore and re-register exact alarms for all upcoming trips on startup
+  // Restore and re-register exact alarms for upcoming trips
   function restoreAlarmsOnStartup() {
     const trips = window.captainStorage.getTrips();
     const now = Date.now();

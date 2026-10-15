@@ -6,19 +6,19 @@
   <title>كابتن المشاوير</title>
 
   <!-- PWA & Mobile Meta Tags -->
-  <meta name="theme-color" content="#080C14">
+  <meta name="theme-color" content="#09090b">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="كابتن المشاوير">
 
   <!-- Manifest -->
   <link rel="manifest" href="./manifest.json">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='90' fill='%23080C14'/%3E%3Ccircle cx='256' cy='256' r='180' fill='none' stroke='%23F59E0B' stroke-width='24'/%3E%3Ccircle cx='256' cy='256' r='60' fill='%232563EB' stroke='%23F59E0B' stroke-width='10'/%3E%3Cpath d='M76 256h120m120 0h120M256 316v120' stroke='%23F59E0B' stroke-width='24' stroke-linecap='round'/%3E%3Ccircle cx='256' cy='120' r='20' fill='%2310B981'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%2309090b'/%3E%3Ccircle cx='256' cy='256' r='140' fill='none' stroke='%2310b981' stroke-width='24'/%3E%3Cpath d='M256 160v96l64 64' stroke='%23fafafa' stroke-width='24' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 
   <!-- Google Font 'Tajawal' -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="./css/style.css">
 </head>
@@ -26,82 +26,119 @@
 
   <div class="app-shell">
 
-    <!-- Top Navigation Header (Notch Safe) -->
-    <header class="top-nav">
-      <div class="brand-group">
-        <span class="brand-badge">🚕</span>
-        <div class="brand-text-col">
-          <h1 class="brand-title">كابتن المشاوير</h1>
-          <div class="brand-status"><span class="status-dot"></span> متصل وجاهز للرحلات</div>
-        </div>
+    <!-- Compact Minimalist Top Bar (Safe from Notches) -->
+    <header class="top-bar">
+      <div class="brand-wrap">
+        <span class="status-indicator" title="متصل"></span>
+        <h1 class="brand-title">كابتن المشاوير</h1>
       </div>
-      <div class="nav-actions">
-        <button id="btnTestAlarm" class="btn-icon-subtle" title="تجربة رنين المنبه الفوري">
-          <span class="icon">🔔</span>
-          <span class="label">تجربة المنبه</span>
+      <div class="top-actions">
+        <!-- Battery Protection -->
+        <button id="btnBatteryFix" class="btn-top-icon" title="حماية المنبه من إغلاق النظام" aria-label="حماية البطارية">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="16" height="10" rx="2" ry="2"></rect>
+            <line x1="22" y1="11" x2="22" y2="13"></line>
+            <polygon points="10 9 7 13 11 13 8 17 14 12 10 12 10 9" fill="currentColor"></polygon>
+          </svg>
         </button>
-        <button id="btnOpenManual" class="btn-icon-primary" title="إضافة مشوار يدوياً">
-          <span class="icon">➕</span>
-          <span class="label">مشوار</span>
+
+        <!-- Test Alarm -->
+        <button id="btnTestAlarm" class="btn-top-icon" title="تجربة رنين المنبه الصارم" aria-label="تجربة المنبه">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+        </button>
+
+        <!-- Add Trip Manually -->
+        <button id="btnOpenManual" class="btn-top-icon primary" title="إضافة مشوار يدوياً" aria-label="إضافة مشوار">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
         </button>
       </div>
     </header>
 
-    <!-- Scrollable Driver Dashboard -->
-    <main class="main-dashboard">
+    <!-- Main Viewport Dashboard -->
+    <main class="dashboard-viewport">
 
-      <!-- Live Clock & Date Widget -->
-      <section class="clock-banner" aria-label="الساعة والتاريخ الحالي">
-        <div class="clock-display-row">
-          <div class="clock-time-group">
-            <span id="liveClockTime" class="clock-time">--:--:--</span>
-            <span id="liveClockPeriod" class="clock-period">--</span>
+      <!-- Sleek Clock & Date Banner (iOS Widget Style) -->
+      <section class="time-widget" aria-label="التوقيت الحالي">
+        <div class="time-widget-inner">
+          <div class="live-clock">
+            <span id="liveClockTime" class="clock-digits">--:--:--</span>
+            <span id="liveClockPeriod" class="clock-meridiem">--</span>
           </div>
-          <div id="liveClockDate" class="clock-date">جاري التحميل...</div>
+          <div class="clock-separator">•</div>
+          <div id="liveClockDate" class="clock-calendar">جاري المزامنة...</div>
         </div>
       </section>
 
-      <!-- Prominent Voice Input Hero Card (اضغط للتحدث) -->
-      <section class="voice-hero-card" id="voiceHeroCard">
-        <button id="voiceFabTouch" class="voice-hero-btn" aria-label="اضغط للتحدث لتسجيل المشوار بالصوت">
-          <div class="mic-glow-ring">
-            <div class="mic-icon-wrap">
-              <span id="micIcon" class="mic-icon">🎙️</span>
-              <div class="sound-wave-bars" id="soundWaves">
+      <!-- Central Action: Minimalist Voice Recording Card -->
+      <section class="voice-card">
+        <div class="voice-card-header">
+          <span class="voice-card-label">تسجيل مشوار بالصوت</span>
+          <span id="voiceBadge" class="voice-state-badge">جاهز</span>
+        </div>
+
+        <button id="voiceFabTouch" class="voice-record-btn" aria-label="اضغط للتحدث لتسجيل المشوار بالصوت">
+          <div class="mic-ring-outer">
+            <div class="mic-ring-inner">
+              <svg id="micSvg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+              <!-- Live sound wave pulses during listening -->
+              <div class="pulse-bars" id="soundWaves">
                 <span></span><span></span><span></span><span></span><span></span>
               </div>
             </div>
           </div>
-          <div class="voice-text-col">
-            <div id="voiceStatusTitle" class="voice-main-title">اضغط للتحدث لتسجيل مشوار ⚡</div>
-            <div id="voiceStatusSub" class="voice-sub-title">مثال: "مشوار لأحمد بكرة 5 مساءً"</div>
-          </div>
+        </button>
+
+        <div class="voice-status-block">
+          <div id="voiceStatusTitle" class="voice-instruction">اضغط وتحدث لتسجيل مشوار فوري</div>
+          <div id="voiceStatusSub" class="voice-hint">مثال: "مشوار للمطار بكرة 6 الصبح بـ 400 جنيه"</div>
+        </div>
+      </section>
+
+      <!-- Secondary Quick Action Buttons -->
+      <section class="quick-actions-bar">
+        <button id="btnImportContact" class="btn-action-outline">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="8.5" cy="7" r="4"></circle>
+            <line x1="20" y1="8" x2="20" y2="14"></line>
+            <line x1="23" y1="11" x2="17" y2="11"></line>
+          </svg>
+          <span>سحب جهة اتصال</span>
+        </button>
+
+        <button id="btnQuickAddTrip" class="btn-action-outline">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span>إضافة يدوياً</span>
         </button>
       </section>
 
-      <!-- Clean Action Pills (Contacts & Battery) -->
-      <section class="quick-tools-grid">
-        <button id="btnImportContact" class="btn-tool-pill">
-          <span class="pill-icon">📞</span>
-          <span class="pill-text">سحب رقم من جهات الاتصال</span>
-        </button>
-        <button id="btnBatteryFix" class="btn-tool-pill battery">
-          <span class="pill-icon">🔋</span>
-          <span class="pill-text">استثناء توفير البطارية للمنبه</span>
-        </button>
-      </section>
-
-      <!-- Schedule Section -->
+      <!-- Rides Schedule Section -->
       <section class="schedule-section">
         <div class="schedule-header">
-          <div class="schedule-title-wrap">
-            <span class="schedule-title">جدول الرحلات والمشاوير</span>
-            <span id="tripsCountBadge" class="trips-count-badge">0 مشوار</span>
+          <div class="schedule-title-row">
+            <h2 class="schedule-heading">مشاوير اليوم</h2>
+            <span id="tripsCountBadge" class="count-chip">0 رحلات</span>
           </div>
         </div>
 
-        <!-- Dynamic Trips Container -->
-        <div id="tripsContainer" class="trips-list">
+        <!-- Dynamic List of Trips -->
+        <div id="tripsContainer" class="trips-container">
           <!-- Populated dynamically via JS -->
         </div>
       </section>
@@ -110,74 +147,84 @@
 
   </div> <!-- End app-shell -->
 
-  <!-- Full-Screen Emergency Alarm Dismiss Overlay -->
-  <div id="urgentAlarmOverlay" class="urgent-alarm-overlay" role="alertdialog" aria-modal="true">
-    <div class="urgent-alarm-content">
-      <div class="urgent-alarm-icon">⏰</div>
-      <h2 class="urgent-alarm-title">حان موعد المشوار الآن يا كابتن!</h2>
-      <p class="urgent-alarm-sub">المنبه الصوتي يعمل بأعلى درجة تنبيه واهتزاز</p>
-      <button id="btnStopUrgentAlarm" class="btn-stop-alarm-modern">
-        <span>🔕</span> <span>إيقاف التنبيه</span>
+  <!-- Full-Screen High-Priority Alarm Alert Overlay -->
+  <div id="urgentAlarmOverlay" class="alarm-alert-overlay" role="alertdialog" aria-modal="true">
+    <div class="alarm-alert-box">
+      <div class="alarm-bell-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+      </div>
+      <h2 class="alarm-alert-heading">حان موعد المشوار الآن</h2>
+      <p class="alarm-alert-sub">المنبه الصارم يعمل حالياً بأعلى درجة صوت واهتزاز</p>
+      <button id="btnStopUrgentAlarm" class="btn-dismiss-alarm">
+        إيقاف التنبيه
       </button>
     </div>
   </div>
 
-  <!-- Modern Manual Add Modal -->
-  <div id="modalLayer" class="modal-layer">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 class="modal-title">تسجيل مشوار جديد</h3>
-        <button id="btnCloseModal" class="btn-close-modal" aria-label="إغلاق">✕</button>
+  <!-- Minimalist Clean Manual Add Modal -->
+  <div id="modalLayer" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-dialog-header">
+        <h3 class="modal-dialog-title">تسجيل مشوار جديد</h3>
+        <button id="btnCloseModal" class="btn-modal-close" aria-label="إغلاق">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
 
-      <form id="cleanManualForm" class="modal-form">
-        <div class="form-group">
-          <label for="manualName" class="form-label">اسم العميل</label>
-          <input type="text" id="manualName" class="form-input" placeholder="مثال: أستاذ محمود أو د. أحمد" required>
+      <form id="cleanManualForm" class="modal-dialog-form">
+        <div class="input-field-group">
+          <label for="manualName" class="field-label">اسم العميل</label>
+          <input type="text" id="manualName" class="text-input" placeholder="مثال: أستاذ محمود أو د. أحمد" required>
         </div>
 
-        <div class="form-group">
-          <label for="manualPhone" class="form-label">رقم الهاتف (اختياري)</label>
-          <input type="tel" id="manualPhone" class="form-input" placeholder="01XXXXXXXXX" dir="ltr">
+        <div class="input-field-group">
+          <label for="manualPhone" class="field-label">رقم الهاتف (اختياري)</label>
+          <input type="tel" id="manualPhone" class="text-input" placeholder="01XXXXXXXXX" dir="ltr">
         </div>
 
-        <div class="form-group">
-          <label for="manualType" class="form-label">نوع المشوار</label>
-          <select id="manualType" class="form-input">
-            <option value="airport">✈️ مشوار مطار</option>
-            <option value="travel">🛣️ سفر محافظات</option>
-            <option value="school">🎒 توصيلة مدرسة</option>
-            <option value="general" selected>🚗 مشوار خاص VIP</option>
+        <div class="input-field-group">
+          <label for="manualType" class="field-label">نوع المشوار</label>
+          <select id="manualType" class="select-input">
+            <option value="airport">مشوار مطار</option>
+            <option value="travel">سفر محافظات</option>
+            <option value="school">توصيلة مدرسة</option>
+            <option value="general" selected>مشوار خاص VIP</option>
           </select>
         </div>
 
-        <div class="form-row-2">
-          <div class="form-group">
-            <label for="manualDate" class="form-label">التاريخ</label>
-            <input type="date" id="manualDate" class="form-input" required>
+        <div class="input-split-row">
+          <div class="input-field-group">
+            <label for="manualDate" class="field-label">التاريخ</label>
+            <input type="date" id="manualDate" class="text-input" required>
           </div>
-          <div class="form-group">
-            <label for="manualTime" class="form-label">الوقت</label>
-            <input type="time" id="manualTime" class="form-input" required>
+          <div class="input-field-group">
+            <label for="manualTime" class="field-label">الوقت</label>
+            <input type="time" id="manualTime" class="text-input" required>
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="manualPrice" class="form-label">الأجرة بالجنيه (اختياري)</label>
-          <input type="number" id="manualPrice" class="form-input" placeholder="مثال: 350">
+        <div class="input-field-group">
+          <label for="manualPrice" class="field-label">الأجرة بالجنيه (اختياري)</label>
+          <input type="number" id="manualPrice" class="text-input" placeholder="مثال: 350">
         </div>
 
-        <button type="submit" class="btn-form-submit">
-          <span>حفظ المشوار وتفعيل المنبه ⚡</span>
+        <button type="submit" class="btn-submit-trip">
+          حفظ المشوار وتفعيل المنبه
         </button>
       </form>
     </div>
   </div>
 
   <!-- Toast Notification Bar -->
-  <div id="toastBar" class="toast-bar">
-    <span id="toastIcon" class="toast-icon">✅</span>
-    <span id="toastText" class="toast-text">تم حفظ المشوار!</span>
+  <div id="toastBar" class="toast-notification">
+    <span id="toastIcon" class="toast-dot"></span>
+    <span id="toastText" class="toast-message">تم حفظ المشوار</span>
   </div>
 
   <!-- Scripts -->

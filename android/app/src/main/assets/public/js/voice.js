@@ -37,7 +37,7 @@ class VoiceScheduler {
 
       this.recognition.onstart = () => {
         this.isListening = true;
-        this.onStateChange('listening', 'جارٍ الاستماع... اتكلم يا كابتن 🎙️');
+        this.onStateChange('listening', 'جارٍ الاستماع... اتكلم يا كابتن');
         if (window.soundEffects) {
           window.soundEffects.playListeningStart();
         }
@@ -176,7 +176,7 @@ class VoiceScheduler {
       return;
     }
 
-    this.onStateChange('processing', 'جارٍ الفهم والحفظ التلقائي... ⚡');
+    this.onStateChange('processing', 'جارٍ الفهم والحفظ التلقائي...');
 
     // 1. NLP Parse
     const parsedTrip = this.parser.parse(transcript);
@@ -190,13 +190,13 @@ class VoiceScheduler {
     }
 
     // 4. Update UI State & Trigger Callback
-    this.onStateChange('committed', `تم حفظ المشوار: ${savedTrip.clientName} (${savedTrip.typeLabel}) ✅`);
+    this.onStateChange('committed', `تم حفظ المشوار: ${savedTrip.clientName}`);
     this.onTripCreated(savedTrip, transcript);
 
     // Reset indicator after 3 seconds
     setTimeout(() => {
       if (!this.isListening) {
-        this.onStateChange('idle', 'اضغط للتحدث لتسجيل مشوار فوري ⚡');
+        this.onStateChange('idle', 'اضغط وتحدث لتسجيل مشوار فوري');
       }
     }, 3200);
   }
